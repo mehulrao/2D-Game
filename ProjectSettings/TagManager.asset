@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - PickUp
+  - Damage
+  - Damage Floor
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - player
+  - BG
+  - Colliders
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Background
+    uniqueID: 2484697961
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Middle
+    uniqueID: 1479769423
+    locked: 0
+  - name: Foreground
+    uniqueID: 1576191061
+    locked: 0
+  - name: Pause Screen
+    uniqueID: 2935614559
+    locked: 0
+  - name: ABOVE PAUSE SCREEN
+    uniqueID: 1007357277
+    locked: 0
