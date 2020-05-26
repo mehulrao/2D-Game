@@ -7,9 +7,6 @@ public class endGameScript : MonoBehaviour
 {
     public void restartGame() {
         SceneManager.LoadScene(1);
-        #if !UNITY_WEBGL
-        Application.targetFrameRate = Screen.currentResolution.refreshRate;
-        #endif
         Time.timeScale = 1;
     }
 

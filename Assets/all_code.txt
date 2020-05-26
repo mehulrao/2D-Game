@@ -1,0 +1,666 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class damageHandler : MonoBehaviour {
+    public int maxHealth = 10;
+    public int currentHealth;
+    public HealthBar healthBar;
+    public Animator animator;
+    float curTime = 0;
+    float nextDamage = 1;
+
+    public Material mat;
+
+    private void Start() {
+        currentHealth = maxHealth;
+        healthBar.setMaxHealth(maxHealth);
+    }
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        //Check the provided Collider2D parameter other to see if it is tagged "PickUp", if it is...
+        if (other.gameObject.CompareTag("Damage Floor"))
+        {
+            if (curTime <= 0)
+            {
+                takeDamage(10);
+                curTime = nextDamage;
+            }
+        }
+    }
+
+    void OnTriggerStay2D(Collider2D other) {
+        if (other.gameObject.CompareTag("Damage"))
+        {
+            if (curTime <= 0)
+            {
+                takeDamage(1);
+                curTime = nextDamage;
+            }
+        }
+    }
+
+    void takeDamage(int damage) //selected algorithm (parent)
+    {
+        animator.SetBool("isHurt", true); //Run hurt animation
+        currentHealth = (currentHealth - damage); //Subtract damage from current health
+        healthBar.setHealth(currentHealth);  //Sets health to currentHealth by calling HealthBar.cs
+        Invoke("backToIdle", .5f);   //Calls "backToIdle" Function after .5 seconds (sub algo 1)
+        if (currentHealth <= 0) //Checks if the health of the player is 0
+        {
+            Die(); //Runs Die Function (sub algo 2)
+        }
+    }
+
+    void backToIdle() //included algorithm (child)
+    {
+        animator.SetBool("isHurt", false); //Stops playing hurt animation
+        curTime = 0; //Resets time after last damage
+    }
+
+    void Die() //included algorithm (child)
+    {
+        currentHealth = maxHealth; //Set health to max due to player death
+        healthBar.setHealth(currentHealth); //Set healthBar back to max
+        Scene thisScene = SceneManager.GetActiveScene(); //Store current scene in a variable
+        SceneManager.LoadScene(thisScene.buildIndex + 2); //Load Death Scene(main scene + 2)
+    }
+}
+----------------------------------------------------------
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+public class nextLevel : MonoBehaviour
+{
+    public GameObject playerObject;
+    public Text houseText;
+    private int Score;
+    private int Health;
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("Player"))
+        {
+            checkForWin();
+        }
+    }
+    void checkForWin() //Function that checks if the player has won
+    {
+        if(Score >= 5) //Check if score is greater than or equal to 5
+        {
+                houseText.text = "Come Inside!"; //Change the text to "Come Inside"
+                houseText.gameObject.SetActive(true); //Set the text above the house to active
+                Invoke("removeText", 2f); //Calls function that removes the text
+                Invoke("enterHouse", 1f); //Calls function that opens "You Win" scene
+        }
+        else //If the player has not won yet
+        {
+                houseText.text = "Come Back With 5 Gems!"; //Sets house text to "Come Back With 5 Gems!"
+                houseText.gameObject.SetActive(true); //Sets houseText to active
+                Invoke("removeText", 2f); //Calls function that removes houseText after 2 seconds
+        }
+    }
+
+    void noWin()
+    {
+        houseText.text = "Come Back With 5 Gems!";
+        houseText.gameObject.SetActive(true);
+        Invoke("removeText", 2f);
+    }
+    void Start()
+    {
+        houseText.gameObject.SetActive(false);
+    }
+
+    void removeText()
+    {
+        houseText.gameObject.SetActive(false);
+    }
+
+    void Update()
+    {
+        captureGem gemScript = playerObject.GetComponent<captureGem>();
+        Score = gemScript.currentScore;
+    }
+
+    void enterHouse() {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+}
+--------------------------------------------------------
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class captureGem : MonoBehaviour
+{
+    public GemBar gemBar;
+    public int maxScore = 5;
+    public int currentScore = 0;
+    public GameObject gemObject;
+    public Vector2 initalPosition;
+    float curTime = 0;
+    float nextScore = 1;
+
+    public GameObject collectPreFab;
+
+    GameObject effect;
+    void Start()
+    {
+        initalPosition.x = -6.5f;
+        initalPosition.y = 6f;
+        gemBar.setScore(currentScore);
+        gemBar.setMaxScore(maxScore);
+        gemObject.transform.position = initalPosition;
+    }
+
+    void Update()
+    {
+        curTime = 0;
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("PickUp"))
+        {
+            if (curTime <= 0)
+            {
+                addScore();
+                curTime = nextScore;
+                effect = Instantiate(collectPreFab ,other.gameObject.transform.position, Quaternion.identity);
+                Invoke("destroyEffect", 1f);
+                switch (currentScore)
+                {
+                    case 1:
+                        //First Score
+                        gemObject.transform.position = new Vector2(-11.3f, -3.4f);
+                        break;
+                    case 2:
+                        //Second Score
+                        gemObject.transform.position = new Vector2(0.6f, 1.85f);
+                        break;
+                    case 3:
+                        //Third Score
+                        gemObject.transform.position = new Vector2(-10f, 0f);
+                        break;
+                    case 4:
+                        //Fourth Score
+                        gemObject.transform.position = new Vector2(7.5f, -2.6f);
+                        break;
+                    case 5:
+                        Destroy(gemObject);
+                        break;
+                    default:
+                        Debug.Log("currentScore unknown value");
+                        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                        break;
+                }
+            }
+        }
+
+    }
+    void addScore()
+    {
+        currentScore++;
+        gemBar.setScore(currentScore);
+    }
+
+    private void destroyEffect() {
+        Destroy(effect);
+    }
+}
+--------------------------------------------------
+using UnityEngine;
+using UnityEngine.Events;
+
+public class CharacterController2D : MonoBehaviour
+{
+
+	//MODIFIED CODE FROM https://github.com/Brackeys/2D-Character-Controller
+
+	[SerializeField] private float m_JumpForce = 400f;                          // Amount of force added when the player jumps.
+	[Range(0, 1)] [SerializeField] private float m_CrouchSpeed = .36f;          // Amount of maxSpeed applied to crouching movement. 1 = 100%
+	[Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;  // How much to smooth out the movement
+	[SerializeField] private bool m_AirControl = false;                         // Whether or not a player can steer while jumping;
+	[SerializeField] private LayerMask m_WhatIsGround;                          // A mask determining what is ground to the character
+	[SerializeField] private Transform m_GroundCheck;
+	[SerializeField] private Transform m_GroundCheck2;// A position marking where to check if the player is grounded.
+	[SerializeField] private Transform m_CeilingCheck;                          // A position marking where to check for ceilings
+	[SerializeField] private Collider2D m_CrouchDisableCollider;                // A collider that will be disabled when crouching
+
+	[SerializeField] private float m_delayGroundCheck = 0.25f;
+
+	const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
+	private bool m_Grounded;            // Whether or not the player is grounded.
+	const float k_CeilingRadius = .2f; // Radius of the overlap circle to determine if the player can stand up
+	private Rigidbody2D m_Rigidbody2D;
+	private bool m_FacingRight = true;  // For determining which way the player is currently facing.
+	private Vector3 m_Velocity = Vector3.zero;
+
+	private float timeBeforeGroundCheck = 0f;
+
+	[Header("Events")]
+	[Space]
+
+	public UnityEvent OnLandEvent;
+
+	[System.Serializable]
+	public class BoolEvent : UnityEvent<bool> { }
+
+	public BoolEvent OnCrouchEvent;
+	private bool m_wasCrouching = false;
+
+	private void Awake()
+	{
+		m_Rigidbody2D = GetComponent<Rigidbody2D>();
+
+		if (OnLandEvent == null)
+			OnLandEvent = new UnityEvent();
+
+		if (OnCrouchEvent == null)
+			OnCrouchEvent = new BoolEvent();
+	}
+
+	private void Update()
+	{
+		if (!m_Grounded)
+		{
+			timeBeforeGroundCheck -= Time.deltaTime;
+		}
+	}
+
+	private void FixedUpdate()
+	{
+		if (timeBeforeGroundCheck > 0f)
+		{
+			return;
+		}
+		bool wasGrounded = m_Grounded;
+		m_Grounded = false;
+
+		// The player is grounded if a circlecast to the groundcheck position hits anything designated as ground
+		// This can be done using layers instead but Sample Assets will not overwrite your project settings.
+		Collider2D[] colliders = Physics2D.OverlapCircleAll(m_GroundCheck.position, k_GroundedRadius, m_WhatIsGround);
+		for (int i = 0; i < colliders.Length; i++)
+		{
+			if (colliders[i].gameObject != gameObject)
+			{
+				m_Grounded = true;
+				if (!wasGrounded)
+					OnLandEvent.Invoke();
+			}
+		}
+
+		Collider2D[] colliders2 = Physics2D.OverlapCircleAll(m_GroundCheck2.position, k_GroundedRadius, m_WhatIsGround);
+		for (int i = 0; i < colliders2.Length; i++)
+		{
+			if (colliders2[i].gameObject != gameObject)
+			{
+				m_Grounded = true;
+				if (!wasGrounded)
+					OnLandEvent.Invoke();
+			}
+		}
+	}
+
+
+	public void Move(float move, bool crouch, bool jump)
+	{
+		// If crouching, check to see if the character can stand up
+		if (!crouch)
+		{
+			// If the character has a ceiling preventing them from standing up, keep them crouching
+			if (Physics2D.OverlapCircle(m_CeilingCheck.position, k_CeilingRadius, m_WhatIsGround))
+			{
+				crouch = true;
+			}
+		}
+
+		//only control the player if grounded or airControl is turned on
+		if (m_Grounded || m_AirControl)
+		{
+
+			// If crouching
+			if (crouch)
+			{
+				if (!m_wasCrouching)
+				{
+					m_wasCrouching = true;
+					OnCrouchEvent.Invoke(true);
+				}
+
+				// Reduce the speed by the crouchSpeed multiplier
+				move *= m_CrouchSpeed;
+
+				// Disable one of the colliders when crouching
+				if (m_CrouchDisableCollider != null)
+					m_CrouchDisableCollider.enabled = false;
+			}
+			else
+			{
+				// Enable the collider when not crouching
+				if (m_CrouchDisableCollider != null)
+					m_CrouchDisableCollider.enabled = true;
+
+				if (m_wasCrouching)
+				{
+					m_wasCrouching = false;
+					OnCrouchEvent.Invoke(false);
+				}
+			}
+
+			// Move the character by finding the target velocity
+			Vector3 targetVelocity = new Vector2(move * 10f, m_Rigidbody2D.velocity.y);
+			// And then smoothing it out and applying it to the character
+			m_Rigidbody2D.velocity = Vector3.SmoothDamp(m_Rigidbody2D.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
+
+			// If the input is moving the player right and the player is facing left...
+			if (move > 0 && !m_FacingRight)
+			{
+				// ... flip the player.
+				Flip();
+			}
+			// Otherwise if the input is moving the player left and the player is facing right...
+			else if (move < 0 && m_FacingRight)
+			{
+				// ... flip the player.
+				Flip();
+			}
+		}
+		// If the player should jump...
+		if (m_Grounded && jump)
+		{
+			// Add a vertical force to the player.
+			m_Grounded = false;
+			m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
+
+			timeBeforeGroundCheck = m_delayGroundCheck;
+		}
+	}
+
+
+	private void Flip()
+	{
+		// Switch the way the player is labelled as facing.
+		m_FacingRight = !m_FacingRight;
+
+		// Multiply the player's x local scale by -1.
+		Vector3 theScale = transform.localScale;
+		theScale.x *= -1;
+		transform.localScale = theScale;
+	}
+}
+----------------------------------------------------------
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class deathCollide : MonoBehaviour
+{
+
+    public deathCollide endLocation;
+    public bool receiving = false;
+    void OnTriggerEnter2D(Collider2D coll)
+    {
+        if (!receiving)
+        {
+            endLocation.receiving = true;
+            coll.gameObject.transform.position = endLocation.gameObject.transform.position;
+        }
+
+        receiving = false;
+    }
+}
+-------------------------------------------------------
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class endGameScript : MonoBehaviour
+{
+    public void restartGame() {
+        SceneManager.LoadScene(1);
+        Time.timeScale = 1;
+    }
+
+    public void quitGame() {
+        Time.timeScale = 1;
+        Application.Quit();
+    }
+}
+---------------------------------------------------------
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class endGameScript : MonoBehaviour
+{
+    public void restartGame() {
+        SceneManager.LoadScene(1);
+        Time.timeScale = 1;
+    }
+
+    public void quitGame() {
+        Time.timeScale = 1;
+        Application.Quit();
+    }
+}
+-------------------------------------------------
+using UnityEngine;
+using System.Collections;
+using UnityEngine.Experimental.Rendering.Universal;
+
+public class Flicker : MonoBehaviour
+{
+    public float MaxReduction;
+    public float MaxIncrease;
+    public float RateDamping;
+    public float Strength;
+    public bool StopFlickering;
+
+    public Light2D _lightSource;
+    private float _baseIntensity;
+    private bool _flickering;
+
+    public void Reset()
+    {
+        MaxReduction = 0.2f;
+        MaxIncrease = 0.2f;
+        RateDamping = 0.1f;
+        Strength = 300;
+    }
+
+    public void Start()
+    {
+        if (_lightSource == null)
+        {
+            Debug.LogError("Flicker script must have a Light Component on the same GameObject.");
+            return;
+        }
+        _baseIntensity = _lightSource.intensity;
+        StartCoroutine(DoFlicker());
+    }
+
+    void Update()
+    {
+        if (!StopFlickering && !_flickering)
+        {
+            StartCoroutine(DoFlicker());
+        }
+    }
+
+    private IEnumerator DoFlicker()
+    {
+        _flickering = true;
+        while (!StopFlickering)
+        {
+            _lightSource.intensity = Mathf.Lerp(_lightSource.intensity, Random.Range(_baseIntensity - MaxReduction, _baseIntensity + MaxIncrease), Strength * Time.deltaTime);
+            yield return new WaitForSeconds(RateDamping);
+        }
+        _flickering = false;
+    }
+}
+-----------------------------------------------------
+using UnityEngine;
+using UnityEngine.UI;
+
+public class GemBar : MonoBehaviour
+{
+    public Slider slider;
+
+    public void setMaxScore(int score)
+    {
+        slider.maxValue = score;
+        slider.value = 0;
+    }
+
+    public void setScore(int score)
+    {
+        slider.value = score;
+    }
+}
+--------------------------------------------------------
+using UnityEngine;
+using UnityEngine.UI;
+
+public class HealthBar : MonoBehaviour
+{
+    public Slider slider;
+
+    public void setMaxHealth(int health)
+    {
+        slider.maxValue = health;
+        slider.value = health;
+    }
+
+    public void setHealth(int health)
+    {
+        slider.value = health; //Sets the health slider to show the current health
+    }
+}
+--------------------------------------------------
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class pasueScript : MonoBehaviour
+{
+    [SerializeField] private GameObject pausePanel;
+    void Start()
+{
+    pausePanel.SetActive(false);
+}
+void Update()
+{
+    if(Input.GetKeyDown (KeyCode.Escape))
+    {
+        if (!pausePanel.activeInHierarchy)
+        {
+            PauseGame();
+        }
+        else if (pausePanel.activeInHierarchy)
+        {
+                ContinueGame();
+        }
+    }
+    }
+private void PauseGame()
+{
+    Time.timeScale = 0;
+    pausePanel.SetActive(true);
+    //Disable scripts that still work while timescale is set to 0
+}
+private void ContinueGame()
+{
+    Time.timeScale = 1;
+    pausePanel.SetActive(false);
+    //enable the scripts again
+}
+}
+-------------------------------------------------
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public CharacterController2D controller;
+
+    public Animator animator;
+
+    public GameObject player;
+    public GameObject spawnPoint;
+
+    float horizontalMove = 0f;
+
+    public float runSpeed = 40f;
+
+    bool jump = false;
+    bool crouch = false;
+
+    void Start()
+    {
+        player.gameObject.transform.position = spawnPoint.gameObject.transform.position;
+    }
+
+    void Update()
+    {
+        horizontalMove = Input.GetAxisRaw("Horizontal") * runSpeed;
+
+        animator.SetFloat("speed", Mathf.Abs(horizontalMove));
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            jump = true;
+            animator.SetBool("isJumping", true);
+            //Debug.Log("Jumping True");
+        }
+
+        if (Input.GetButtonDown("Crouch"))
+        {
+            crouch = true;
+        }
+
+        else if (Input.GetButtonUp("Crouch"))
+        {
+            crouch = false;
+        }
+
+    }
+
+    public void onLanding()
+    {
+        animator.SetBool("isJumping", false);
+        //Debug.Log("Jumping False");
+    }
+
+    public void onCrouching(bool isCrouching)
+    {
+        animator.SetBool("isCrouching", isCrouching);
+    }
+    void FixedUpdate()
+    {
+        controller.Move(horizontalMove * Time.fixedDeltaTime, crouch, jump);
+        jump = false;
+    }
+}
+----------------------------------------------------
+using UnityEngine;
+
+public class portalChecker : MonoBehaviour
+{
+
+    public portalChecker otherPortal;
+    public bool receiving = false;
+    void OnTriggerEnter2D(Collider2D coll)
+    {
+        if (!receiving)
+        {
+            otherPortal.receiving = true;
+            coll.gameObject.transform.position = otherPortal.gameObject.transform.position;
+        }
+
+        receiving = false;
+    }
+}
