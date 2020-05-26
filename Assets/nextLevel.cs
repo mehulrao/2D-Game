@@ -14,23 +14,24 @@ public class nextLevel : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Player"))
         {
-            if(Score >= 5)
-            {
-                winGame();
-            }
-            else
-            {
-                noWin();
-            }
+            checkForWin();
         }
     }
-
-    void winGame()
+    void checkForWin() //Function that checks if the player has won
     {
-        houseText.gameObject.SetActive(true);
-        houseText.text = "Come Inside!";
-        Invoke("removeText", 2f);
-        Invoke("enterHouse", 1f);
+        if(Score >= 5) //Check if score is greater than or equal to 5
+        {
+                houseText.text = "Come Inside!"; //Change the text to "Come Inside"
+                houseText.gameObject.SetActive(true); //Set the text above the house to active
+                Invoke("removeText", 2f); //Calls function that removes the text
+                Invoke("enterHouse", 1f); //Calls function that opens "You Win" scene
+        }
+        else //If the player has not won yet
+        {
+                houseText.text = "Come Back With 5 Gems!"; //Sets house text to "Come Back With 5 Gems!"
+                houseText.gameObject.SetActive(true); //Sets houseText to active
+                Invoke("removeText", 2f); //Calls function that removes houseText after 2 seconds
+        }
     }
 
     void noWin()

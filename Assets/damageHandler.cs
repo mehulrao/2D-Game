@@ -31,7 +31,6 @@ public class damageHandler : MonoBehaviour {
     void OnTriggerStay2D(Collider2D other) {
         if (other.gameObject.CompareTag("Damage"))
         {
-            //Debug.Log("Entered");
             if (curTime <= 0)
             {
                 takeDamage(1);
@@ -40,7 +39,7 @@ public class damageHandler : MonoBehaviour {
         }
     }
 
-    void takeDamage(int damage)
+    void takeDamage(int damage) //selected algorithm (parent)
     {
         animator.SetBool("isHurt", true); //Run hurt animation
         currentHealth = (currentHealth - damage); //Subtract damage from current health
@@ -52,13 +51,13 @@ public class damageHandler : MonoBehaviour {
         }
     }
 
-    void backToIdle()
+    void backToIdle() //included algorithm (child)
     {
         animator.SetBool("isHurt", false); //Stops playing hurt animation
         curTime = 0; //Resets time after last damage
     }
 
-    void Die()
+    void Die() //included algorithm (child)
     {
         currentHealth = maxHealth; //Set health to max due to player death
         healthBar.setHealth(currentHealth); //Set healthBar back to max
